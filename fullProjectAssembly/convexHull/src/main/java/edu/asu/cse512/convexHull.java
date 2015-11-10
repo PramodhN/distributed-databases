@@ -14,7 +14,8 @@ import edu.asu.cse512.util.Constants;
 import edu.asu.cse512.util.SortPoints;
 
 /**
- * Hello world!
+ * Compute convex hull on a set of points
+ * @author pramodh
  *
  */
 public class convexHull {

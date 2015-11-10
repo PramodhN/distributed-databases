@@ -15,7 +15,8 @@ import edu.asu.cse512.util.Constants;
 import scala.Tuple2;
 
 /**
- * Hello world!
+ * Perform spatial join on a given query rectangle for points and rectangles
+ * @author pramodh
  *
  */
 public class Join {

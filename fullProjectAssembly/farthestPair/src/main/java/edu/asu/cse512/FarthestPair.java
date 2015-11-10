@@ -17,7 +17,8 @@ import edu.asu.cse512.util.Constants;
 import scala.Tuple2;
 
 /**
- * Hello world!
+ * Find farthest pair of points among a set of given points
+ * @author pramodh
  *
  */
 public class FarthestPair {

@@ -10,7 +10,8 @@ import edu.asu.cse512.math.Polygon;
 import edu.asu.cse512.util.Constants;
 
 /**
- * Hello world!
+ * Perform spatial range query for a given query rectangle 
+ * @author pramodh
  *
  */
 public class RangeQuery {

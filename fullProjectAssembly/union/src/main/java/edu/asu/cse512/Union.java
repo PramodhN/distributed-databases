@@ -12,7 +12,8 @@ import edu.asu.cse512.util.Constants;
 import edu.asu.cse512.util.SortPoints;
 
 /**
- * Hello world!
+ * Perform union of a given set of polygons 
+ * @author pramodh
  *
  */
 public class Union {
@@ -21,7 +22,7 @@ public class Union {
 	 *            args[0] = input file, args[1] = output file
 	 */
 	public static void main(String[] args) {
-		SparkConf conf = new SparkConf().setAppName(Constants.APP_NAME).setMaster(Constants.MASTER);
+		SparkConf conf = new SparkConf().setAppName(Constants.APP_NAME);
 		@SuppressWarnings("resource")
 		JavaSparkContext spark = new JavaSparkContext(conf);
 
