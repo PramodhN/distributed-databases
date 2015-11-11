@@ -1,6 +1,5 @@
 package edu.asu.cse512;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.spark.SparkConf;
@@ -83,22 +82,27 @@ public class FarthestPair {
 				LineSegment lineSeg = new LineSegment(point, otherPoint);
 				return lineSeg;
 			}
-		});
-
-		// Sort all the line segments in descending order based on the distance between them
-		JavaRDD<LineSegment> segments = maxDistPair.sortBy(new Function<LineSegment, Double>() {
+		}).sortBy(new Function<LineSegment, Double>() {
 			public Double call(LineSegment v) throws Exception {
 				return v.distance();
 			}
 		}, false, 1);
 
-		// Save first result from the sorted RDD of line segments into a list.
-		ArrayList<LineSegment> output = new ArrayList<LineSegment>();
-		LineSegment farthestPair = segments.first();
-		output.add(farthestPair);
+		// Find the line segment with maximum distance
+		final LineSegment farthestPair = maxDistPair.first();
 
-		// Save the minimum distance points to a text file
-		spark.parallelize(output).repartition(1).saveAsTextFile(args[1]);
+		JavaRDD<LineSegment> maxSameDist = maxDistPair.filter(new Function<LineSegment, Boolean>() {
+			public Boolean call(LineSegment line) throws Exception {
+				if (line.distance() == farthestPair.distance() && !farthestPair.getP1().equals(line.getP1()) && !farthestPair.getP2().equals(line.getP2())) {
+					return true;
+				} else
+					return false;
+			}
+		});
+
+		// save all the pair of points with minimum distance to the file
+		maxSameDist.repartition(1).saveAsTextFile(args[1]);
+
 	}
 
 }

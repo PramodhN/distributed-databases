@@ -1,6 +1,5 @@
 package edu.asu.cse512;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.spark.SparkConf;
@@ -72,22 +71,27 @@ public class ClosestPair {
 				LineSegment lineSeg = new LineSegment(point, otherPoint);
 				return lineSeg;
 			}
-		});
-
-		// Sort all the line segments in ascending order based on the distance between them
-		JavaRDD<LineSegment> segments = minDistPair.sortBy(new Function<LineSegment, Double>() {
+		}).sortBy(new Function<LineSegment, Double>() {
 			public Double call(LineSegment v) throws Exception {
 				return v.distance();
 			}
 		}, true, 1);
 
 		// Save first result from the sorted RDD of line segments into a list.
-		ArrayList<LineSegment> output = new ArrayList<LineSegment>();
-		LineSegment closestPair = segments.first();
-		output.add(closestPair);
+		final LineSegment minLineSeg = minDistPair.first();
 
-		// Save the minimum distance points to a text file
-		spark.parallelize(output).repartition(1).saveAsTextFile(args[1]);
+		JavaRDD<LineSegment> minSameDist = minDistPair.filter(new Function<LineSegment, Boolean>() {
+			public Boolean call(LineSegment line) throws Exception {
+				if (line.distance() == minLineSeg.distance() && !minLineSeg.getP1().equals(line.getP1()) && !minLineSeg.getP2().equals(line.getP2())) {
+					return true;
+				} else
+					return false;
+			}
+		});
+
+		// save all the pair of points with minimum distance to the file
+		minSameDist.repartition(1).saveAsTextFile(args[1]);
+
 	}
 
 }
