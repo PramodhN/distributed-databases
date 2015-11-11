@@ -28,7 +28,7 @@ public class ClosestPair {
 	 */
 	@SuppressWarnings("serial")
 	public static void main(String[] args) {
-		SparkConf conf = new SparkConf().setAppName(Constants.APP_NAME);
+		SparkConf conf = new SparkConf().setAppName(Constants.APP_NAME).setMaster(Constants.MASTER);
 		@SuppressWarnings("resource")
 		JavaSparkContext spark = new JavaSparkContext(conf);
 
@@ -77,26 +77,19 @@ public class ClosestPair {
 		});
 
 		// Sort all the line segments based on their x and y coordinates
-		ArrayList<LineSegment> segments = SortPoints.sortLineSegment(minDistPair.collect());
-
-		// The distance between points having minimum distance
-		final double minDist = segments.get(0).distance();
-
-		// Get all the line segments that have same minimum distance
-		JavaRDD<LineSegment> minSameDist = minDistPair.filter(new Function<LineSegment, Boolean>() {
-			public Boolean call(LineSegment arg0) throws Exception {
-				if (arg0.distance() == minDist) {
-					return true;
-				} else
-					return false;
+		JavaRDD<LineSegment> segments = minDistPair.sortBy(new Function<LineSegment, Double>() {
+			public Double call(LineSegment v) throws Exception {
+				return v.distance();
 			}
-		});
+		}, true, 1);
 
-		segments.clear();
-		segments.add(minSameDist.first());
-
+		// Save first result from the sorted RDD of line segments into a list.
+		ArrayList<LineSegment> output = new ArrayList<LineSegment>();
+		LineSegment closestPair = segments.first();
+		output.add(closestPair);
+		
 		// Save the minimum distance points to a text file
-		spark.parallelize(segments).repartition(1).saveAsTextFile(args[1]);
+		spark.parallelize(output).repartition(1).saveAsTextFile(args[1]);
 	}
 
 }
