@@ -12,7 +12,6 @@ import org.apache.spark.broadcast.Broadcast;
 import edu.asu.cse512.math.LineSegment;
 import edu.asu.cse512.math.Point;
 import edu.asu.cse512.util.Constants;
-import edu.asu.cse512.util.SortPoints;
 
 /**
  * Find closest pair between set of points
@@ -28,7 +27,7 @@ public class ClosestPair {
 	 */
 	@SuppressWarnings("serial")
 	public static void main(String[] args) {
-		SparkConf conf = new SparkConf().setAppName(Constants.APP_NAME).setMaster(Constants.MASTER);
+		SparkConf conf = new SparkConf().setAppName(Constants.APP_NAME);
 		@SuppressWarnings("resource")
 		JavaSparkContext spark = new JavaSparkContext(conf);
 
@@ -58,16 +57,15 @@ public class ClosestPair {
 		// Create RDD of line segments of each point with its closest point
 		JavaRDD<LineSegment> minDistPair = points.map(new Function<Point, LineSegment>() {
 			public LineSegment call(Point point) {
-				double maxDist = Double.MAX_VALUE;
-				double mindist = Double.MIN_VALUE;
+				double minDist = Double.MAX_VALUE;
 				Point otherPoint = null;
 				for (int i = 0; i < allPoints.getValue().size(); i++) {
 					Point p = allPoints.getValue().get(i);
 					if (!p.equals(point)) {
-						mindist = new LineSegment(p, point).distance();
-						if (mindist < maxDist && mindist != 0.0) {
-							maxDist = mindist;
-							otherPoint = allPoints.getValue().get(i);
+						double distance = new LineSegment(p, point).distance();
+						if (distance < minDist && minDist != 0.0) {
+							minDist = distance;
+							otherPoint = p;
 						}
 					}
 				}
@@ -76,7 +74,7 @@ public class ClosestPair {
 			}
 		});
 
-		// Sort all the line segments based on their x and y coordinates
+		// Sort all the line segments in ascending order based on the distance between them
 		JavaRDD<LineSegment> segments = minDistPair.sortBy(new Function<LineSegment, Double>() {
 			public Double call(LineSegment v) throws Exception {
 				return v.distance();
@@ -87,7 +85,7 @@ public class ClosestPair {
 		ArrayList<LineSegment> output = new ArrayList<LineSegment>();
 		LineSegment closestPair = segments.first();
 		output.add(closestPair);
-		
+
 		// Save the minimum distance points to a text file
 		spark.parallelize(output).repartition(1).saveAsTextFile(args[1]);
 	}

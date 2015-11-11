@@ -4,20 +4,20 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.spark.SparkConf;
-import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.Function2;
+import org.apache.spark.broadcast.Broadcast;
 
 import edu.asu.cse512.math.LineSegment;
 import edu.asu.cse512.math.Point;
 import edu.asu.cse512.math.Polygon;
 import edu.asu.cse512.util.Constants;
-import scala.Tuple2;
 
 /**
  * Find farthest pair of points among a set of given points
+ * 
  * @author pramodh
  *
  */
@@ -62,39 +62,43 @@ public class FarthestPair {
 		// Create an RDD of just the vertices on the convex hull
 		JavaRDD<Point> convexVertices = spark.parallelize(convexHull.getPoints());
 
-		// Create an RDD of all possible pairs of points. Filter out pairs that have same points(since distance between them will be 0).
-		JavaPairRDD<Point, Point> pairs = convexVertices.cartesian(convexVertices).filter(new Function<Tuple2<Point, Point>, Boolean>() {
-			public Boolean call(Tuple2<Point, Point> v1) throws Exception {
-				if (v1._1().equals(v1._2()))
-					return false;
-				return true;
+		// Create a broadcast list of all points
+		final Broadcast<List<Point>> convexBroadcastPoints = spark.broadcast(convexVertices.take((int) convexVertices.count()));
+
+		// Create RDD of line segments of each point with its closest point
+		JavaRDD<LineSegment> maxDistPair = convexVertices.map(new Function<Point, LineSegment>() {
+			public LineSegment call(Point point) {
+				double maxDist = Double.MIN_VALUE;
+				Point otherPoint = null;
+				for (int i = 0; i < convexBroadcastPoints.getValue().size(); i++) {
+					Point p = convexBroadcastPoints.getValue().get(i);
+					if (!p.equals(point)) {
+						double distance = new LineSegment(p, point).distance();
+						if (distance > maxDist) {
+							maxDist = distance;
+							otherPoint = p;
+						}
+					}
+				}
+				LineSegment lineSeg = new LineSegment(point, otherPoint);
+				return lineSeg;
 			}
 		});
 
-		// Convert point pairs to line segments.
-		JavaRDD<LineSegment> segments = pairs.map(new Function<Tuple2<Point, Point>, LineSegment>() {
-			public LineSegment call(Tuple2<Point, Point> t) throws Exception {
-				return new LineSegment(t._1(), t._2());
+		// Sort all the line segments in descending order based on the distance between them
+		JavaRDD<LineSegment> segments = maxDistPair.sortBy(new Function<LineSegment, Double>() {
+			public Double call(LineSegment v) throws Exception {
+				return v.distance();
 			}
-		});
+		}, false, 1);
 
-		// Reduce line segments to choose the one with max distance.
-		LineSegment maxDistancePoints = segments.reduce(new Function2<LineSegment, LineSegment, LineSegment>() {
-			public LineSegment call(LineSegment v1, LineSegment v2) throws Exception {
-				if (v1.distance() > v2.distance())
-					return v1;
-				else
-					return v2;
-			}
-		});
+		// Save first result from the sorted RDD of line segments into a list.
+		ArrayList<LineSegment> output = new ArrayList<LineSegment>();
+		LineSegment farthestPair = segments.first();
+		output.add(farthestPair);
 
-		List<LineSegment> listSeg = new ArrayList<LineSegment>();
-		listSeg.add(maxDistancePoints);
-		JavaRDD<LineSegment> output = spark.parallelize(listSeg);
-
-		// Save the maximum distance points to a text file
-		output.repartition(1).saveAsTextFile(args[1]);
-
+		// Save the minimum distance points to a text file
+		spark.parallelize(output).repartition(1).saveAsTextFile(args[1]);
 	}
 
 }
