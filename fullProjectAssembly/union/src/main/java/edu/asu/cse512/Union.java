@@ -12,7 +12,8 @@ import edu.asu.cse512.util.Constants;
 import edu.asu.cse512.util.SortPoints;
 
 /**
- * Perform union of a given set of polygons 
+ * Perform union of a given set of polygons
+ * 
  * @author pramodh
  *
  */
@@ -61,7 +62,7 @@ public class Union {
 		JavaRDD<Point> output = spark.parallelize(SortPoints.sortPoints(union.getPoints()));
 
 		// Save the vertices of union polygon into a text file
-		output.repartition(1).saveAsTextFile(args[1]);
+		output.saveAsTextFile(args[1]);
 
 	}
 

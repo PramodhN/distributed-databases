@@ -232,7 +232,7 @@ public class Join {
 		});
 
 		// Save point join results into a text file
-		outputFormat.repartition(1).saveAsTextFile(outputFile);
+		outputFormat.saveAsTextFile(outputFile);
 	}
 
 }

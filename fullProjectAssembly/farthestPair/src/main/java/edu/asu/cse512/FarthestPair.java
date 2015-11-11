@@ -101,7 +101,7 @@ public class FarthestPair {
 		});
 
 		// save all the pair of points with minimum distance to the file
-		maxSameDist.repartition(1).saveAsTextFile(args[1]);
+		maxSameDist.saveAsTextFile(args[1]);
 
 	}
 

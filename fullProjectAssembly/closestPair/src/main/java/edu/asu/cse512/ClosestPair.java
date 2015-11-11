@@ -90,7 +90,7 @@ public class ClosestPair {
 		});
 
 		// save all the pair of points with minimum distance to the file
-		minSameDist.repartition(1).saveAsTextFile(args[1]);
+		minSameDist.saveAsTextFile(args[1]);
 
 	}
 

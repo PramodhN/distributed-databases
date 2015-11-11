@@ -96,6 +96,6 @@ public class RangeQuery {
 		});
 
 		// Save the points that fall in range of query rectange into a text file
-		pointIds.repartition(1).saveAsTextFile(args[2]);
+		pointIds.saveAsTextFile(args[2]);
 	}
 }

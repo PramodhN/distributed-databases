@@ -69,6 +69,6 @@ public class convexHull {
 		JavaRDD<Point> output = spark.parallelize(SortPoints.sortPoints(convexHull.getPoints()));
 
 		// Save vertices of convex hull into a text file
-		output.repartition(1).saveAsTextFile(args[1]);
+		output.saveAsTextFile(args[1]);
 	}
 }
