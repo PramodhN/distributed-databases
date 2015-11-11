@@ -16,7 +16,8 @@ import scala.Tuple2;
 
 /**
  * Perform spatial join on a given query rectangle for points and rectangles
- * @author pramodh
+ * 
+ * @author ankita
  *
  */
 public class Join {
