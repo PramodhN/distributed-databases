@@ -5,6 +5,7 @@ import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.Function;
+import org.apache.spark.api.java.function.Function2;
 import org.apache.spark.api.java.function.PairFunction;
 
 import scala.Tuple2;
@@ -67,7 +68,15 @@ public class countPoints
 			}
 		});
 		
-		// Convert input file to RDD of points and filter out null values
+		// Reduce as union of polygons
+				final Polygon union = queryRect.reduce(new Function2<Polygon, Polygon, Polygon>() {
+					public Polygon call(Polygon v1, Polygon v2) throws Exception {
+						return v1.union(v2);
+					}
+				});
+
+		
+		// Convert input file to RDD of points and filter out points which lie outside the union rectangle
 		JavaRDD<Point> points = inputPoints.map(new Function<String, Point>() {
 					public Point call(String s) throws Exception {
 						String[] points = s.split(",");
@@ -81,12 +90,15 @@ public class countPoints
 					}
 				}).filter(new Function<Point, Boolean>() {
 					public Boolean call(Point v1) throws Exception {
-						if (v1 == null)
+						if (v1 == null || !union.contains(v1)){
 							return false;
+						}
 						else
 							return true;
 					}
 				});
+		
+		
 
 		// Find points that join with each query polygons
 		JavaPairRDD<Long, Long> joins = queryRect.cartesian(points).mapToPair(new PairFunction<Tuple2<Polygon, Point>, Long, Long>() {
@@ -109,6 +121,7 @@ public class countPoints
 		
 		// Group and sort by the query rectangle
 		JavaPairRDD<Long, Iterable<Long>> result = joins.groupByKey().sortByKey();
+		
 				// Create String RDD to match output format
 				JavaRDD<String> outputFormat = result.map(new Function<Tuple2<Long, Iterable<Long>>, String>() {
 					public String call(Tuple2<Long, Iterable<Long>> v1) throws Exception {
