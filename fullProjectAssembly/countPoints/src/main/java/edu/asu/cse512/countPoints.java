@@ -1,5 +1,7 @@
 package edu.asu.cse512;
 
+import java.util.Iterator;
+
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
@@ -32,8 +34,7 @@ public class countPoints
     
     private static void countPointsInside(String testData, String qRect, String outputFile) {
 
-		SparkConf conf = new SparkConf().setAppName(Constants.APP_NAME)
-				.setMaster(Constants.MASTER);
+		SparkConf conf = new SparkConf().setAppName(Constants.APP_NAME);
 		JavaSparkContext sc = new JavaSparkContext(conf);
 
 		// Contents of test data file
@@ -125,7 +126,15 @@ public class countPoints
 				// Create String RDD to match output format
 				JavaRDD<String> outputFormat = result.map(new Function<Tuple2<Long, Iterable<Long>>, String>() {
 					public String call(Tuple2<Long, Iterable<Long>> v1) throws Exception {
-						String output = v1._1 + " , "+Iterables.size(v1._2);
+						
+						long count = 0l;
+						Iterator itr = v1._2.iterator();
+						while (itr.hasNext()) {
+							count++;
+							itr.next();
+						}
+						String output = v1._1 + " , "+count;
+						System.out.println(output);
 						return output;
 					}
 				});
