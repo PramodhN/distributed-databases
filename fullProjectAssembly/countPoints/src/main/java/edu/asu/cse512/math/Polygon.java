@@ -154,7 +154,7 @@ public class Polygon implements Serializable {
 		}
 		SimplePolygon2D polygon2 = new SimplePolygon2D(thisPolygonPoints);
 
-		SimplePolygon2D union = (SimplePolygon2D) Polygons2D.union(polygon1, polygon2);
+		Polygon2D union = Polygons2D.union(polygon1, polygon2);
 
 		ArrayList<Point> unionPoints = new ArrayList<Point>();
 		for (Point2D vertex : union.vertices()) {

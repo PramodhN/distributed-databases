@@ -1,5 +1,6 @@
 package edu.asu.cse512;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 
 import org.apache.spark.SparkConf;
@@ -10,10 +11,9 @@ import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.Function2;
 import org.apache.spark.api.java.function.PairFunction;
 
+import com.google.common.collect.Lists;
+
 import scala.Tuple2;
-
-import com.google.common.collect.Iterables;
-
 import edu.asu.cse512.math.Point;
 import edu.asu.cse512.math.Polygon;
 import edu.asu.cse512.util.Constants;
@@ -22,7 +22,7 @@ import edu.asu.cse512.util.Constants;
  * Hello world!
  *
  */
-public class countPoints 
+public class aggregation 
 {
     public static void main( String[] args )
     {
@@ -69,12 +69,12 @@ public class countPoints
 			}
 		});
 		
-		// Reduce as union of polygons
-				final Polygon union = queryRect.reduce(new Function2<Polygon, Polygon, Polygon>() {
-					public Polygon call(Polygon v1, Polygon v2) throws Exception {
-						return v1.union(v2);
-					}
-				});
+//		// Reduce as union of polygons
+//				final Polygon union = queryRect.reduce(new Function2<Polygon, Polygon, Polygon>() {
+//					public Polygon call(Polygon v1, Polygon v2) throws Exception {
+//						return v1.union(v2);
+//					}
+//				});
 
 		
 		// Convert input file to RDD of points and filter out points which lie outside the union rectangle
@@ -91,7 +91,7 @@ public class countPoints
 					}
 				}).filter(new Function<Point, Boolean>() {
 					public Boolean call(Point v1) throws Exception {
-						if (v1 == null || !union.contains(v1)){
+						if (v1 == null){
 							return false;
 						}
 						else
@@ -126,15 +126,8 @@ public class countPoints
 				// Create String RDD to match output format
 				JavaRDD<String> outputFormat = result.map(new Function<Tuple2<Long, Iterable<Long>>, String>() {
 					public String call(Tuple2<Long, Iterable<Long>> v1) throws Exception {
-						
-						long count = 0l;
-						Iterator itr = v1._2.iterator();
-						while (itr.hasNext()) {
-							count++;
-							itr.next();
-						}
-						String output = v1._1 + " , "+count;
-						System.out.println(output);
+						ArrayList<Long> count = Lists.newArrayList(v1._2);
+						String output = v1._1 + " , "+count.size();
 						return output;
 					}
 				});
