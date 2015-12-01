@@ -73,6 +73,6 @@
   	<module>closestPair</module>
   	<module>rangeQuery</module>
   	<module>joinQuery</module>
-    <module>countPoints</module>
+    <module>aggregation</module>
   </modules>
 </project>

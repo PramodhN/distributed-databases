@@ -1,4 +1,4 @@
-package org.countPoints;
+package org.aggregation;
 
 import junit.framework.Test;
 import junit.framework.TestCase;
